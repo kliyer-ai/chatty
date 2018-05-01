@@ -6,7 +6,7 @@ def main(addr, mode):
 
     if mode == "s":
         s = Server(addr)
-        s.listen()
+        s.start()
     elif mode == "c":
         c = Client(addr)
         c.send()
