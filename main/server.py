@@ -8,7 +8,7 @@ class Server(Thread):
 
     def __init__(self, addr):
         Thread.__init__(self)
-        #Thread.daemon = True
+        Thread.daemon = True
 
         self.addr = addr
 
@@ -33,7 +33,6 @@ class Server(Thread):
 
     def accept(self):
         c, addr = self.sock.accept()            
-        #handler = EchoHandler(c, addr)
         handler = SimpleHandler(c, addr)
         handler.start()
         self.connections[addr[0]] = handler
@@ -43,15 +42,20 @@ class Server(Thread):
             if addr[0] in self.connections:
                 self.connections[addr[0]].send(msg)
             else:
-                print("Could not find connection")
+                c = socket.create_connection(addr)
+                handler = SimpleHandler(c, addr)
+                handler.start()
+                self.connections[addr[0]] = handler
+                handler.send(msg)
 
     def receiveFrom(self, ip):
-        if ip in self.connections:
-            msgs = self.connections[ip].get_msgs()
-            for msg in msgs:
-                print(msg)
-        else:
-            print("Could not find connection")     
+        with self.lock:
+            if ip in self.connections:
+                msgs = self.connections[ip].get_msgs()
+                for msg in msgs:
+                    print(msg)
+            else:
+                print("Could not find connection")     
 
 
     def shutdown(self):
