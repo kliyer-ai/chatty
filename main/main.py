@@ -6,11 +6,16 @@ def main(addr, user):
 
     done = False
     while not done:
-        command = input("Choose option")
+        inp = input("Choose option").split(" ")
+        command = inp[0]
         if command == "send":
             client.send()
         elif command == "receive":
             client.get_msgs()
+        elif command == "pending":
+            client.pending()
+        elif command == "approve":
+            client.approve(inp[1])
         elif command == "done":
             done = True
 

@@ -2,23 +2,29 @@ import socket
 from echoHandler import EchoHandler
 from simpleHandler import SimpleHandler
 from threading import Thread, Lock 
+from connector import Connector
+from approver import Approver
 
 class Server(Thread):
 
 
-    def __init__(self, addr):
+    def __init__(self, addr, sender):
         Thread.__init__(self)
         Thread.daemon = True
 
         self.addr = addr
+        self.sender = sender
 
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.bind(addr)
         self.sock.listen(5)        
 
-        self.connections = {}
+        self.pending = {}
         self.closed = False
+
+        self.unread = {}
+        self.users = {}
         
         self.lock = Lock()
 
@@ -33,38 +39,52 @@ class Server(Thread):
 
     def accept(self):
         c, addr = self.sock.accept()            
-        handler = SimpleHandler(c, addr)
-        handler.start()
-        self.connections[addr[0]] = handler
+        app = Approver(self, c)
+        app.start()
+        
 
-    def sendTo(self, addr, msg):
+    def sendTo(self, recipient, msg):
         with self.lock:
-            if addr[0] in self.connections:
-                self.connections[addr[0]].send(msg)
+            if recipient in self.users:
+                self.users[recipient].send(msg)
             else:
-                c = socket.create_connection(addr)
-                handler = SimpleHandler(c, addr)
-                handler.start()
-                self.connections[addr[0]] = handler
-                handler.send(msg)
+                ip = input("ip: ")
+                port = input("port: ")
+                addr = (ip, int(port))
 
-    def receiveFrom(self, ip):
+                try:
+                    c = socket.create_connection(addr)
+                    con = Connector(self, c, msg)
+                    con.start()
+                    self.pending[addr[0]] = con
+                except:
+                    print("Cannot connect to given address")
+
+    def receiveFrom(self, user):
         with self.lock:
-            if ip in self.connections:
-                msgs = self.connections[ip].get_msgs()
-                for msg in msgs:
-                    print(msg)
+
+            if user in self.users:
+                msgs = self.users[user].get_msgs()
+                return msgs
             else:
-                print("Could not find connection")     
+                return []
+
+    def add_unread(self, msg):
+        with self.lock:
+            user = msg["name"]
+            if user in self.unread:
+                self.unread[user].append(msg)
+            else:
+                self.unread[user] = [msg]
 
 
     def shutdown(self):
         self.closed = True
 
-    def get_connections(self):
+    def get_pending(self):
         cs = []
         with self.lock:
-            for c in self.connections.keys():
+            for c in self.pending.keys():
                 cs.append(c)
-        return c
+        return cs
 
