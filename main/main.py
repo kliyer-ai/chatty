@@ -6,7 +6,7 @@ def main(addr, user):
 
     done = False
     while not done:
-        inp = input("Choose option").split(" ")
+        inp = input("Choose option:").split(" ")
         command = inp[0]
         if command == "send":
             client.send()
@@ -22,8 +22,8 @@ def main(addr, user):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--port", dest = "port", default = "4444", help="port")
-    parser.add_argument("-ip", "--ipaddress", dest = "ip", default = "127.0.0.1", help="ip address to connect to")
-    parser.add_argument("-u", "--user", dest = "user", default = "anonymous")
+    parser.add_argument("-ip", "--ipaddress", dest = "ip", default = "", help="ip address to connect to")
+    parser.add_argument("-u", "--user", dest = "user", default = "anonymous", help="Your user name")
 
     args = parser.parse_args()
     

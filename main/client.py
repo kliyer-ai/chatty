@@ -23,7 +23,7 @@ class Client():
         ip = input("user: ")
         msgs = self.server.receiveFrom(ip)
         for msg in msgs:
-            print("Received on", msg["received"], "from", msg["sender"], ":")
+            print("Received on", msg["received"], "from", msg["sender"])
             print(msg["text"])
 
     def approve(self, user):
